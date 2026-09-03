@@ -27,3 +27,7 @@ require("default.hypr.toggles")
 
 -- Add any other personal Hyprland configuration below.
 -- o.window("qemu", { workspace = "5" })
+
+-- Machine-local overrides (gitignored). Written by ~/scripts/server-mode.sh
+-- on server-like machines; absent elsewhere.
+pcall(require, "hypr.local")
