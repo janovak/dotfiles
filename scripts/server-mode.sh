@@ -17,11 +17,17 @@ if [[ $EUID -eq 0 ]]; then
   exit 1
 fi
 
+# --- 1. Never suspend: mask every sleep target. Takes effect immediately, and
+#        is what actually stops a lid-close from suspending (logind tries, hits
+#        the masked target, gives up). ---
 echo "==> Masking sleep targets (sudo)"
 sudo systemctl mask \
   sleep.target suspend.target hibernate.target hybrid-sleep.target suspend-then-hibernate.target
 
-echo "==> logind: ignore lid + sleep/hibernate keys (sudo)"
+# --- 2. Make lid-close / power key a clean no-op instead of a failed suspend.
+#        Applied on the NEXT REBOOT. We deliberately do NOT restart
+#        systemd-logind: that tears down the running graphical session. ---
+echo "==> Installing logind drop-in (activates on next reboot)"
 sudo install -d /etc/systemd/logind.conf.d
 sudo tee /etc/systemd/logind.conf.d/10-server-no-sleep.conf >/dev/null <<'EOF'
 # Managed by ~/scripts/server-mode.sh
@@ -31,16 +37,16 @@ HandleLidSwitchExternalPower=ignore
 HandleLidSwitchDocked=ignore
 HandleSuspendKey=ignore
 HandleHibernateKey=ignore
-IdleAction=ignore
 EOF
-sudo systemctl restart systemd-logind
 
-echo "==> Ensuring hypridle is installed (Omarchy ships no idle display-off)"
+# --- 3. Display power-off on idle. Omarchy ships no idle DPMS at all, so add
+#        hypridle with a display-only listener (no suspend, no lock). ---
+echo "==> Ensuring hypridle is installed"
 if ! command -v hypridle >/dev/null; then
   sudo pacman -S --needed --noconfirm hypridle
 fi
 
-echo "==> Writing $CONFDIR/hypridle.conf (display off after ${DPMS_TIMEOUT}s; no suspend/lock)"
+echo "==> Writing $CONFDIR/hypridle.conf (display off after ${DPMS_TIMEOUT}s)"
 mkdir -p "$CONFDIR"
 cat > "$CONFDIR/hypridle.conf" <<EOF
 # Managed by ~/scripts/server-mode.sh
@@ -75,11 +81,14 @@ fi
 cat <<'EOF'
 
 Done.
-  * Suspend/hibernate are masked — nothing can put the box to sleep.
-  * The display powers off on idle and comes back on input.
+  * Suspend/hibernate are masked — nothing can put the box to sleep,
+    lid-close included.
+  * The display powers off after idle and comes back on input.
+  * Reboot at your leisure to also silence the lid switch in logind
+    (optional — suspend is already blocked either way).
 
 Verify:
-  systemctl is-enabled suspend.target           # -> masked
-  systemctl show systemd-logind | grep LidSwitch # -> ignore
-  pgrep -a hypridle
+  systemctl is-enabled suspend.target             # -> masked
+  pgrep -a hypridle                                # -> running
+  hyprctl dispatch dpms off                        # -> screen off now; move mouse to wake
 EOF
