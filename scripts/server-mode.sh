@@ -9,7 +9,7 @@
 #
 set -euo pipefail
 
-DPMS_TIMEOUT=600   # seconds of idle before the display powers off
+DPMS_TIMEOUT=300   # seconds of idle before the display powers off
 CONFDIR="${XDG_CONFIG_HOME:-$HOME/.config}/hypr"
 
 if [[ $EUID -eq 0 ]]; then
