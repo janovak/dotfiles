@@ -39,7 +39,16 @@ HandleSuspendKey=ignore
 HandleHibernateKey=ignore
 EOF
 
-# --- 3. Display power-off on idle. Omarchy ships no idle DPMS at all, so add
+# --- 3. Turn off Omarchy's screensaver + lock on this machine. Its lock
+#        surface keeps rendering (clock, cursor) and holds the display awake,
+#        which fights hypridle below. "stay-awake" only disables Omarchy's
+#        Quickshell idle cycle; hypridle is untouched. Undo: omarchy toggle
+#        idle allow-idle. Lock manually any time with the keybind. ---
+echo "==> Disabling Omarchy screensaver + lock (omarchy toggle idle stay-awake)"
+omarchy toggle idle stay-awake >/dev/null
+omarchy restart shell >/dev/null 2>&1 || true
+
+# --- 4. Display power-off on idle. Omarchy ships no idle DPMS at all, so add
 #        hypridle with a display-only listener (no suspend, no lock). ---
 echo "==> Ensuring hypridle is installed"
 if ! command -v hypridle >/dev/null; then
@@ -50,10 +59,10 @@ echo "==> Writing $CONFDIR/hypridle.conf (display off after ${DPMS_TIMEOUT}s)"
 mkdir -p "$CONFDIR"
 cat > "$CONFDIR/hypridle.conf" <<EOF
 # Managed by ~/scripts/server-mode.sh
-# Display power only. No suspend/lock listeners on purpose — this is a server,
-# and Omarchy's shell still handles the screensaver and lock timers.
-# Omarchy runs Hyprland in Lua mode, so dpms goes through hl.dsp, not the
-# bare "dpms off" string.
+# Display power only — no suspend/lock listeners on purpose. Omarchy's own
+# screensaver/lock is disabled on this machine (step 3), so hypridle is the
+# sole idle manager. Omarchy runs Hyprland in Lua mode, so dpms goes through
+# hl.dsp, not the bare "dpms off" string.
 general {
     ignore_dbus_inhibit = false
 }
@@ -85,7 +94,8 @@ cat <<'EOF'
 Done.
   * Suspend/hibernate are masked — nothing can put the box to sleep,
     lid-close included.
-  * The display powers off after idle and comes back on input.
+  * Omarchy's screensaver + lock are off; hypridle powers the display
+    down after idle and restores it on input.
   * Reboot at your leisure to also silence the lid switch in logind
     (optional — suspend is already blocked either way).
 
