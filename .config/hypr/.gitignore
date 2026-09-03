@@ -3,3 +3,6 @@
 # Machine-local, written by ~/scripts/server-mode.sh
 local.lua
 hypridle.conf
+
+# Rewritten per-machine by Omarchy's display settings
+monitors.lua
