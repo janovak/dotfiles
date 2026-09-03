@@ -12,3 +12,6 @@ source "$OMARCHY_PATH/default/bash/rc"
 #
 # Make an alias for invoking commands you use constantly
 # alias p='python'
+
+# Manage dotfiles tracked in the bare repo at ~/.dotfiles
+alias dot='git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME'

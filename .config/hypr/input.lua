@@ -1,6 +1,16 @@
 -- Keep only your personal input overrides here. Uncommented settings below
 -- replace Omarchy's defaults.
 
+-- Modern Windows/macOS touchpad scrolling: swipe two fingers up -> page
+-- moves down (content follows fingers). Omarchy defaults this to false.
+hl.config({
+  input = {
+    touchpad = {
+      natural_scroll = true,
+    },
+  },
+})
+
 -- Keyboard layout and options.
 -- See https://wiki.hypr.land/Configuring/Basics/Variables/#input
 -- hl.config({
