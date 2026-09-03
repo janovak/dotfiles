@@ -52,14 +52,16 @@ cat > "$CONFDIR/hypridle.conf" <<EOF
 # Managed by ~/scripts/server-mode.sh
 # Display power only. No suspend/lock listeners on purpose — this is a server,
 # and Omarchy's shell still handles the screensaver and lock timers.
+# Omarchy runs Hyprland in Lua mode, so dpms goes through hl.dsp, not the
+# bare "dpms off" string.
 general {
     ignore_dbus_inhibit = false
 }
 
 listener {
     timeout    = ${DPMS_TIMEOUT}
-    on-timeout = hyprctl dispatch dpms off
-    on-resume  = hyprctl dispatch dpms on
+    on-timeout = hyprctl dispatch 'hl.dsp.dpms("off")'
+    on-resume  = hyprctl dispatch 'hl.dsp.dpms("on")'
 }
 EOF
 
@@ -90,5 +92,5 @@ Done.
 Verify:
   systemctl is-enabled suspend.target             # -> masked
   pgrep -a hypridle                                # -> running
-  hyprctl dispatch dpms off                        # -> screen off now; move mouse to wake
+  hyprctl dispatch 'hl.dsp.dpms("off")'            # -> screen off now; move mouse to wake
 EOF
