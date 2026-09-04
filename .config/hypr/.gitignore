@@ -1,6 +1,6 @@
 *.bak.*
 
-# Machine-local, written by ~/scripts/server-mode.sh
+# Machine-local, written by ~/.local/bin/server-mode
 local.lua
 hypridle.conf
 
