@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
 #
-# server-mode — turn this machine into an always-on server:
+# server-mode.sh — turn this machine into an always-on server:
 #   * never suspend / hibernate (closing the lid does nothing)
 #   * the display may still power off when idle
 #
 # Run this only on server-like machines. Desktops just skip it.
 # Idempotent: safe to re-run after an Omarchy update or a fresh checkout.
-# Lives on PATH via ~/.local/bin, so just: server-mode
 #
 set -euo pipefail
 
@@ -31,7 +30,7 @@ sudo systemctl mask \
 echo "==> Installing logind drop-in (activates on next reboot)"
 sudo install -d /etc/systemd/logind.conf.d
 sudo tee /etc/systemd/logind.conf.d/10-server-no-sleep.conf >/dev/null <<'EOF'
-# Managed by ~/.local/bin/server-mode
+# Managed by ~/scripts/server-mode.sh
 [Login]
 HandleLidSwitch=ignore
 HandleLidSwitchExternalPower=ignore
@@ -59,7 +58,7 @@ fi
 echo "==> Writing $CONFDIR/hypridle.conf (display off after ${DPMS_TIMEOUT}s)"
 mkdir -p "$CONFDIR"
 cat > "$CONFDIR/hypridle.conf" <<EOF
-# Managed by ~/.local/bin/server-mode
+# Managed by ~/scripts/server-mode.sh
 # Display power only — no suspend/lock listeners on purpose. Omarchy's own
 # screensaver/lock is disabled on this machine (step 3), so hypridle is the
 # sole idle manager. Omarchy runs Hyprland in Lua mode, so dpms goes through
@@ -78,7 +77,7 @@ EOF
 echo "==> Enabling hypridle autostart via $CONFDIR/local.lua"
 cat > "$CONFDIR/local.lua" <<'EOF'
 -- Machine-local Hyprland config (gitignored).
--- Managed by ~/.local/bin/server-mode
+-- Managed by ~/scripts/server-mode.sh
 o.launch_on_start("hypridle")
 EOF
 
