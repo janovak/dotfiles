@@ -25,8 +25,13 @@ own changes, so `dot diff <first-commit> HEAD` shows exactly what I've customize
 
 ## Server-like machines
 
-Run `server-mode` (on PATH via `~/.local/bin`) to make a box always-on: masks
-all sleep targets, tells logind to ignore the lid, and swaps Omarchy's
-screensaver/lock for a plain `hypridle` display-off. Desktops skip it. The
-machine-local files it writes (`~/.config/hypr/local.lua`, `hypridle.conf`) are
-gitignored.
+Two scripts (on PATH via `~/.local/bin`), run independently, both idempotent:
+
+- `never-sleep` — masks all systemd sleep targets and tells logind to ignore
+  the lid, so the box can never suspend/hibernate.
+- `display-idle-off` — disables Omarchy's screensaver/lock (its relaunch cycle
+  fights hypridle otherwise) and installs `hypridle` so the display still
+  powers off after idle.
+
+Desktops just skip both. The machine-local files `display-idle-off` writes
+(`~/.config/hypr/local.lua`, `hypridle.conf`) are gitignored.

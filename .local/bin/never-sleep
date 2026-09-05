@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+#
+# never-sleep — stop this machine from ever suspending or hibernating,
+# lid-close included.
+#
+# Run this only on server-like machines. Desktops just skip it.
+# Idempotent: safe to re-run after an Omarchy update or a fresh checkout.
+# Lives on PATH via ~/.local/bin, so just: never-sleep
+#
+set -euo pipefail
+
+if [[ $EUID -eq 0 ]]; then
+  echo "Run as your normal user, not root — the script uses sudo where it needs to." >&2
+  exit 1
+fi
+
+# --- 1. Never suspend: mask every sleep target. Takes effect immediately, and
+#        is what actually stops a lid-close from suspending (logind tries, hits
+#        the masked target, gives up). ---
+echo "==> Masking sleep targets (sudo)"
+sudo systemctl mask \
+  sleep.target suspend.target hibernate.target hybrid-sleep.target suspend-then-hibernate.target
+
+# --- 2. Make lid-close / power key a clean no-op instead of a failed suspend.
+#        Applied on the NEXT REBOOT. We deliberately do NOT restart
+#        systemd-logind: that tears down the running graphical session. ---
+echo "==> Installing logind drop-in (activates on next reboot)"
+sudo install -d /etc/systemd/logind.conf.d
+sudo tee /etc/systemd/logind.conf.d/10-server-no-sleep.conf >/dev/null <<'EOF'
+# Managed by ~/.local/bin/never-sleep
+[Login]
+HandleLidSwitch=ignore
+HandleLidSwitchExternalPower=ignore
+HandleLidSwitchDocked=ignore
+HandleSuspendKey=ignore
+HandleHibernateKey=ignore
+EOF
+
+cat <<'EOF'
+
+Done.
+  * Suspend/hibernate are masked — nothing can put the box to sleep,
+    lid-close included.
+  * Reboot at your leisure to also silence the lid switch in logind
+    (optional — suspend is already blocked either way).
+
+Verify:
+  systemctl is-enabled suspend.target             # -> masked
+EOF
